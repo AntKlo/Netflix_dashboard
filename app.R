@@ -9,9 +9,8 @@ library(plotly)
 data = read.csv("netflix_titles.csv")
 typeof(data)
 #View(data)
-a = table(data$type)
 
-#View(a)
+a = table(data$type)
 movies_number = a[1][1]
 shows_number = a[2][1]
 pr = select(data, 8, 1)
@@ -22,36 +21,6 @@ colnames(production_number)[which(names(production_number) == "release_year")] =
 colnames(production_number)[which(names(production_number) == "show_id")] = "Number of productions"
 
 
-dir_movies = subset(data, type == "Movie", select=c(director))
-dir_shows = subset(data, type == "TV Show", select=c(director))
-dir_movies = dir_movies$director
-dir_movies = dir_movies[! dir_movies %in% c("")]
-dir_movies
-aa = sort(table(dir_movies), decreasing = TRUE)[1:6]
-aa
-
-dir_shows = dir_shows$director
-dir_shows = dir_shows[! dir_shows %in% c("")]
-dir_shows
-
-bb = sort(table(dir_shows), decreasing = TRUE)[1:15]
-bb
-
-act_movies = subset(data, type == "Movie", select=c(cast))
-act_shows = subset(data, type == "TV Show", select=c(cast))
-act_movies = act_movies$cast
-act_movies = act_movies[! act_movies %in% c("")]
-act_movies
-cc = sort(table(act_movies), decreasing = TRUE)[1:8]
-cc
-
-act_shows = act_shows$cast
-act_shows = act_shows[! act_shows %in% c("")]
-act_shows
-
-dd = sort(table(act_shows), decreasing = TRUE)[1:8]
-dd
-
 most_common_movie_director = "Jan Suter"
 most_common_movie_directress = "Cathy Garcia-Molina"
 most_common_show_director = "Alastair Fothergill"
@@ -61,8 +30,11 @@ most_common_movie_actress = "Iliza Shlesinger"
 most_common_show_actor = "David Attenborough"
 most_common_show_actress = "Anna Claire Bartlam"
 
+
+
+
 ui = dashboardPage(
-    dashboardHeader(title = "Netflix"),
+    dashboardHeader(title = tags$a(href = "NetflixDashboard", tags$img(src = "logo.jpg", height = '43', width = '50'))),
     dashboardSidebar(sidebarMenu(
         menuItem("map", tabName = "map", icon = icon("map")),
         menuItem("table", tabName = "table", icon = icon("table")),
@@ -113,7 +85,7 @@ server = function(input, output){
     output$rel_years = renderPlotly({ggplotly(ggplot(data = production_number, aes(x = `Release date`, y = `Number of productions`)) + theme_bw() +
                                       geom_bar(stat = "identity", fill = '#3182bd') + scale_x_continuous(limits=c(input$Years[1]-1, input$Years[2]+1)) +
                                       theme(axis.text=element_text(size=14), axis.title=element_text(size=16)))},
-                                  )#height = 400, width = "auto")
+                                  )
     output$Movies = renderInfoBox({
         infoBox(
             "Movies", length(which(data$type == 'Movie' & data$release_year >= input$Years[1] & data$release_year <= input$Years[2])), icon = icon("film"),
@@ -133,11 +105,13 @@ server = function(input, output){
         )
     })
     
+    
     # Table tab
     output$mytable = renderDataTable({
         datatable(data, filter = 'top')
     })
 
+    
     # Directors tab
     # Men
     output$dir = renderText({
@@ -234,4 +208,5 @@ server = function(input, output){
     }, deleteFile = FALSE)
 
 }
+
 shinyApp(ui, server)
