@@ -105,15 +105,15 @@ mature = c("R", "NC-17", "TV-MA") #18+
 ui = dashboardPage(
     dashboardHeader(title = tags$a(href = "NetflixDashboard", tags$img(src = "logo.jpg", height = '43', width = '50'))),
     dashboardSidebar(sidebarMenu(
-        menuItem("map", tabName = "map", icon = icon("map")),
-        menuItem("table", tabName = "table", icon = icon("table")),
+        menuItem("Release years", tabName = "release_years", icon = icon("calendar-alt")),
+        menuItem("Table", tabName = "table", icon = icon("table")),
         menuItem("Directors", tabName = "Directors", icon = icon("male")),
         menuItem("Film genres", tabName = "film_genres", icon = icon("video"))
     )
     ),
     dashboardBody(
         tabItems(
-            tabItem("map",
+            tabItem("release_years",
                 fluidRow(h1("Number of productions available on Netflix with regards to world release date"), align = "center"),
                 fluidRow(column(width = 4, infoBoxOutput("Movies", width = 12)), column(width = 4, infoBoxOutput("Shows", width = 12)),
                          column(width = 4, infoBoxOutput("Sum", width = 12))),
@@ -168,7 +168,7 @@ ui = dashboardPage(
 )))
 server = function(input, output){
     
-    # Map tab
+    # Release years tab
     output$rel_years = renderPlotly({ggplotly(ggplot(data = production_number, aes(x = `Release date`, y = `Number of productions`)) + theme_bw() +
                                       geom_bar(stat = "identity", fill = '#3182bd') + scale_x_continuous(limits=c(input$Years[1]-1, input$Years[2]+1)) +
                                       theme(axis.text=element_text(size=14), axis.title=element_text(size=16)))},
@@ -232,14 +232,12 @@ server = function(input, output){
     output$dir_img = renderImage({
         text_inp = input$prod_type
         if (text_inp == "movie"){
-            filename <- normalizePath(file.path('./images', paste('movie_dir.jpg')))
-            # Return a list containing the filename
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('movie_dir.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
         else{
-            filename <- normalizePath(file.path('./images', paste('show_dir.jpg')))
-            # Return a list containing the filename
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('show_dir.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
     }, deleteFile = FALSE)
     
@@ -256,14 +254,12 @@ server = function(input, output){
     output$act_img = renderImage({
         text_inp = input$prod_type
         if (text_inp == "movie"){
-            filename <- normalizePath(file.path('./images', paste('movie_act.jpg')))
-            # Return a list containing the filename
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('movie_act.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
         else{
-            filename <- normalizePath(file.path('./images', paste('show_act.jpg')))
-            # Return a list containing the filename
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('show_act.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
     }, deleteFile = FALSE)
     
@@ -281,12 +277,12 @@ server = function(input, output){
     output$dir_img_w = renderImage({
         text_inp = input$prod_type
         if (text_inp == "movie"){
-            filename <- normalizePath(file.path('./images', paste('movie_dir_w.jpg')))
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('movie_dir_w.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
         else{
-            filename <- normalizePath(file.path('./images', paste('show_dir_w.jpg')))
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('show_dir_w.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
     }, deleteFile = FALSE)
     
@@ -303,12 +299,12 @@ server = function(input, output){
     output$act_img_w = renderImage({
         text_inp = input$prod_type
         if (text_inp == "movie"){
-            filename <- normalizePath(file.path('./images', paste('movie_act_w.jpg')))
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('movie_act_w.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
         else{
-            filename <- normalizePath(file.path('./images', paste('show_act_w.jpg')))
-            list(src = filename, width = 500, height = 800)
+            filename <- normalizePath(file.path('./www', paste('show_act_w.jpg')))
+            list(src = filename, width = 400, height = 650)
         }
     }, deleteFile = FALSE)
     
