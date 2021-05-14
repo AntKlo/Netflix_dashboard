@@ -195,7 +195,25 @@ server = function(input, output){
     
     # Table tab
     output$mytable = renderDataTable({
-        datatable(data, filter = 'top')
+        datatable(
+          data[,c(-1)], filter = 'top',
+          options = list(
+            pageLength = 5,
+            lengthMenu = c(5,10,15,20,25,100),
+            scrollX = T,
+            #autoWidth = T,
+            #scrollY = T,
+            #fixedColumns = T,
+            columnDefs = list(list(
+            #width = '50px',
+            targets = "_all",# can be c(4, -1,-2)
+            render = JS(
+              "function(data, type, row, meta) {",
+              "return type === 'display' && data.length > 30 ?",
+              "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
+              "}")#sets max of 30 characters to be displayed in a datatable columns specified by targets
+          )))
+        )
     })
 
     
