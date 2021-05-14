@@ -6,10 +6,11 @@ library(dplyr)
 library(tidyr)
 library(plotly)
 
+# dataset
 data = read.csv("netflix_titles.csv")
-typeof(data)
-#View(data)
 
+
+#--------FOR RELEASE YEARS TAB-----------
 a = table(data$type)
 movies_number = a[1][1]
 shows_number = a[2][1]
@@ -20,7 +21,7 @@ production_number = aggregate(. ~ release_year, data=pr, FUN=sum)
 colnames(production_number)[which(names(production_number) == "release_year")] = "Release date"
 colnames(production_number)[which(names(production_number) == "show_id")] = "Number of productions"
 
-
+#---------DIRECTORS AND ACTORS----------------------
 most_common_movie_director = "Jan Suter"
 most_common_movie_directress = "Cathy Garcia-Molina"
 most_common_show_director = "Alastair Fothergill"
@@ -94,6 +95,7 @@ film_genres = names(sort(film_genres_count, decreasing = T))
 hist(film_genres_count)
 #--------------------------------------------------
 
+
 #------------BELOW I INCLUDED AGE CATEGORIES----------------
 little_kids = c("G", "TV-Y", "TV-G")
 older_kids = c("PG", "TV-Y7", "TV-Y7-FV", "TV-PG") #7+
@@ -102,15 +104,40 @@ mature = c("R", "NC-17", "TV-MA") #18+
 #-------------------------------------------
 
 
+#-----------------------------MAP DATA------------------------------------------
+countries = read.csv("countries.csv")
+countries_codes = select(countries, 1, 3)
+colnames(countries_codes)[which(names(countries_codes) == "COUNTRY")] = "country"
+countries_codes = cbind(countries_codes, Productions = 0)
+
+countries_netflix = select(data, 6, 1)
+countries_netflix[2] = 1
+countries_netflix$show_id = as.numeric(countries_netflix$show_id)
+country_productions = aggregate(. ~ country, data=countries_netflix, FUN=sum)
+
+colnames(country_productions)[which(names(country_productions) == "show_id")] = "Productions"
+country_productions = drop_na(country_productions)
+country_productions = country_productions[-1,]
+
+for(i in 1:nrow(countries_codes)){
+  for(j in 1:nrow(country_productions)){
+    if (country_productions$country[j] == countries_codes$country[i]){
+      countries_codes$Productions[i] = country_productions$Productions[j]
+    }
+  }
+}
+#-------------------------------------------------------------------------------
+
+
 ui = dashboardPage(
-    dashboardHeader(title = tags$a(href = "NetflixDashboard", tags$img(src = "logo.jpg", height = '43', width = '50'))),
+    dashboardHeader(title = tags$a(href = "https://www.netflix.com", tags$img(src = "logo.jpg", height = '43', width = '50'))),
     dashboardSidebar(sidebarMenu(
         menuItem("Release years", tabName = "release_years", icon = icon("calendar-alt")),
         menuItem("Table", tabName = "table", icon = icon("table")),
         menuItem("Directors", tabName = "Directors", icon = icon("male")),
-        menuItem("Film genres", tabName = "film_genres", icon = icon("video"))
-    )
-    ),
+        menuItem("Film genres", tabName = "film_genres", icon = icon("video")),
+        menuItem("Map", tabName = "Map", icon = icon("map"))
+    )),
     dashboardBody(
         tabItems(
             tabItem("release_years",
@@ -149,6 +176,7 @@ ui = dashboardPage(
                   ),
               
                   )),
+            
             tabItem(tabName = "film_genres",
                     sidebarLayout(
                       sidebarPanel(
@@ -164,8 +192,13 @@ ui = dashboardPage(
                       )
                     )
                     
-                    )
+                    ),
+            
+            tabItem("Map",fluidPage(plotlyOutput("map", height = 1000, width = 1500), align = "center")
+            )
 )))
+
+
 server = function(input, output){
     
     # Release years tab
@@ -321,6 +354,15 @@ server = function(input, output){
         }
       }
     )
+    
+    
+    # Map
+    output$map = renderPlotly({
+      plot_geo(countries_codes) %>% add_trace(
+        z = ~Productions, color = ~Productions, colors = 'Blues', zmin = 0, zmax = 250,
+        text = ~country, locations = ~CODE, marker = list(line = list(color = toRGB("grey"), width = 0.5)), showscale = FALSE) %>%
+        layout(title = "<br></br>Number of productions")
+    })
     
 
 }
