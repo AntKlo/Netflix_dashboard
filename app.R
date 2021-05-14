@@ -31,6 +31,75 @@ most_common_show_actor = "David Attenborough"
 most_common_show_actress = "Anna Claire Bartlam"
 
 
+#-------------EXTRACTING FILM GENRES----------------
+df = data.frame(data)
+
+listed_in = df$listed_in
+listed_in = lapply(listed_in, function(x){unlist(strsplit(x, ', '))})
+df$listed_in = listed_in
+rm(listed_in)
+get_film_genres = function(df){
+  return(unique(unlist(df$listed_in)))
+}
+get_film_genres_count = function(df){
+  film_genres = get_film_genres(df)
+  film_genres_count = rep(0, times = length(film_genres))
+  names(film_genres_count) = film_genres
+  for (i in df$listed_in){
+    for (j in i){
+      film_genres_count[j] = film_genres_count[j] + 1
+    }
+  }
+  return(film_genres_count)
+}
+film_genres_count = get_film_genres_count(df)
+sort(film_genres_count)
+#film_genres_count = na.omit(film_genres_count[film_genres_count >= 100])
+
+equal_names = list( 
+  Dramas = c("Dramas", "TV Dramas"),
+  Comedies = c("Comedies", "TV Comedies", "Stand-Up Comedy & Talk Shows", "Stand-Up Comedy"),
+  Thrillers = c("Thrillers", "TV Thrillers"),
+  Documentaries = c("Documentaries", "Docuseries"),
+  Anime = c("Anime Features", "Anime Series"),
+  Kids = c("Kids' TV", "Children & Family Movies", "Teen TV Shows"),
+  Action_and_Adventure = c("TV Action & Adventure", "Action & Adventure"),
+  Science_Fiction_and_Fantasy = c("TV Sci-Fi & Fantasy", "Sci-Fi & Fantasy"),
+  Romantic = c("Romantic TV Shows", "Romantic Movies"),
+  Horror = c("Horror Movies", "TV Horror"),
+  Classic_and_Cult = c("Cult Movies","Classic Movies","Classic & Cult TV")
+)
+####renaming some categories using equal_names------------------------------
+df$listed_in = lapply(df$listed_in, function(x){
+  for (name in names(equal_names)){
+    for (elem in equal_names[[name]]){
+      x[match(elem, x)] = name
+    }
+  }
+  return(x)
+})
+sort(get_film_genres_count(df))
+unnecesary_genres = c(
+  "TV Shows", "Movies", "International TV Shows", "International Movies"
+)
+df$listed_in = lapply(df$listed_in, function(x){
+  for (genre in unnecesary_genres){
+    x = x[x!=genre]
+  }
+  return(x)
+})
+sort(get_film_genres_count(df))
+film_genres_count = get_film_genres_count(df)
+film_genres = names(sort(film_genres_count, decreasing = T))
+hist(film_genres_count)
+#--------------------------------------------------
+
+#------------BELOW I INCLUDED AGE CATEGORIES----------------
+little_kids = c("G", "TV-Y", "TV-G")
+older_kids = c("PG", "TV-Y7", "TV-Y7-FV", "TV-PG") #7+
+teens = c("PG-13", "TV-14")  #13+
+mature = c("R", "NC-17", "TV-MA") #18+
+#-------------------------------------------
 
 
 ui = dashboardPage(
@@ -38,7 +107,8 @@ ui = dashboardPage(
     dashboardSidebar(sidebarMenu(
         menuItem("map", tabName = "map", icon = icon("map")),
         menuItem("table", tabName = "table", icon = icon("table")),
-        menuItem("Directors", tabName = "Directors", icon = icon("male"))
+        menuItem("Directors", tabName = "Directors", icon = icon("male")),
+        menuItem("Film genres", tabName = "film_genres", icon = icon("video"))
     )
     ),
     dashboardBody(
@@ -75,9 +145,26 @@ ui = dashboardPage(
                             tabPanel("Most popular directress", h3(textOutput("dir_w")), imageOutput("dir_img_w")),
                             tabPanel("Most popular actress", h3(textOutput("act_w")), imageOutput("act_img_w"))
                         )
-                )),
-        )
-    )
+                    )
+                  ),
+              
+                  )),
+            tabItem(tabName = "film_genres",
+                    sidebarLayout(
+                      sidebarPanel(
+                        checkboxGroupInput("film_genres", 
+                                           "Film genres", 
+                                           film_genres,
+                                           selected = film_genres
+                        )
+                      ),
+                      mainPanel(
+                        fluidRow(h2("Number of films from different genres"), align = 'center'),
+                        plotlyOutput("genre_bar")
+                      )
+                    )
+                    
+                    )
 )))
 server = function(input, output){
     
@@ -206,7 +293,23 @@ server = function(input, output){
             list(src = filename, width = 500, height = 800)
         }
     }, deleteFile = FALSE)
+    
+    output$genre_bar = renderPlotly({
+        film_genre =input$film_genres
+        count = sort(film_genres_count, decreasing = T)
+        count = count[names(count) %in% film_genre]
+        film_genre = reorder(film_genre, count)
+        breaks = film_genre[seq(1,length(film_genre), length.out = 4)]
+        if(!is.na(breaks[1])){
+          ggplot(NULL) + xlab("Genre") + ylab("Count") + 
+            geom_bar(aes(x = film_genre, y = count), stat = "identity", fill = '#3182bd') + 
+            theme_bw() + scale_x_discrete( breaks = breaks)
+        }
+      }
+    )
+    
 
 }
 
 shinyApp(ui, server)
+
