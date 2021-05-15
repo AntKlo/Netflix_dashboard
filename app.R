@@ -32,75 +32,107 @@ most_common_show_actress = "Anna Claire Bartlam"
 
 
 #-------------EXTRACTING FILM GENRES----------------
-df = data.frame(data)
 
-listed_in = df$listed_in
-listed_in = lapply(listed_in, function(x){unlist(strsplit(x, ', '))})
-df$listed_in = listed_in
-rm(listed_in)
-get_film_genres = function(df){
-  return(unique(unlist(df$listed_in)))
-}
-get_film_genres_count = function(df){
-  film_genres = get_film_genres(df)
-  film_genres_count = rep(0, times = length(film_genres))
-  names(film_genres_count) = film_genres
-  for (i in df$listed_in){
-    for (j in i){
-      film_genres_count[j] = film_genres_count[j] + 1
-    }
+calculate_film_genres_count = function(data){
+  df = data.frame(data)
+  
+  listed_in = df$listed_in
+  listed_in = lapply(listed_in, function(x){unlist(strsplit(x, ', '))})
+  df$listed_in = listed_in
+  rm(listed_in)
+  get_film_genres = function(df){
+    return(unique(unlist(df$listed_in)))
   }
+  get_film_genres_count = function(df){
+    film_genres = get_film_genres(df)
+    film_genres_count = rep(0, times = length(film_genres))
+    names(film_genres_count) = film_genres
+    for (i in df$listed_in){
+      for (j in i){
+        film_genres_count[j] = film_genres_count[j] + 1
+      }
+    }
+    return(film_genres_count)
+  }
+  film_genres_count = get_film_genres_count(df)
+  sort(film_genres_count)
+  #film_genres_count = na.omit(film_genres_count[film_genres_count >= 100])
+  
+  equal_names = list( 
+    Dramas = c("Dramas", "TV Dramas"),
+    Comedies = c("Comedies", "TV Comedies", "Stand-Up Comedy & Talk Shows", "Stand-Up Comedy"),
+    Thrillers = c("Thrillers", "TV Thrillers"),
+    Documentaries = c("Documentaries", "Docuseries"),
+    Anime = c("Anime Features", "Anime Series"),
+    Kids = c("Kids' TV", "Children & Family Movies", "Teen TV Shows"),
+    Action_and_Adventure = c("TV Action & Adventure", "Action & Adventure"),
+    Science_Fiction_and_Fantasy = c("TV Sci-Fi & Fantasy", "Sci-Fi & Fantasy"),
+    Romantic = c("Romantic TV Shows", "Romantic Movies"),
+    Horror = c("Horror Movies", "TV Horror"),
+    Classic_and_Cult = c("Cult Movies","Classic Movies","Classic & Cult TV")
+  )
+  ####renaming some categories using equal_names------------------------------
+  df$listed_in = lapply(df$listed_in, function(x){
+    for (name in names(equal_names)){
+      for (elem in equal_names[[name]]){
+        x[match(elem, x)] = name
+      }
+    }
+    return(x)
+  })
+  sort(get_film_genres_count(df))
+  unnecesary_genres = c(
+    "TV Shows", "Movies", "International TV Shows", "International Movies"
+  )
+  df$listed_in = lapply(df$listed_in, function(x){
+    for (genre in unnecesary_genres){
+      x = x[x!=genre]
+    }
+    return(x)
+  })
+  sort(get_film_genres_count(df))
+  film_genres_count = get_film_genres_count(df)
   return(film_genres_count)
 }
-film_genres_count = get_film_genres_count(df)
-sort(film_genres_count)
-#film_genres_count = na.omit(film_genres_count[film_genres_count >= 100])
-
-equal_names = list( 
-  Dramas = c("Dramas", "TV Dramas"),
-  Comedies = c("Comedies", "TV Comedies", "Stand-Up Comedy & Talk Shows", "Stand-Up Comedy"),
-  Thrillers = c("Thrillers", "TV Thrillers"),
-  Documentaries = c("Documentaries", "Docuseries"),
-  Anime = c("Anime Features", "Anime Series"),
-  Kids = c("Kids' TV", "Children & Family Movies", "Teen TV Shows"),
-  Action_and_Adventure = c("TV Action & Adventure", "Action & Adventure"),
-  Science_Fiction_and_Fantasy = c("TV Sci-Fi & Fantasy", "Sci-Fi & Fantasy"),
-  Romantic = c("Romantic TV Shows", "Romantic Movies"),
-  Horror = c("Horror Movies", "TV Horror"),
-  Classic_and_Cult = c("Cult Movies","Classic Movies","Classic & Cult TV")
-)
-####renaming some categories using equal_names------------------------------
-df$listed_in = lapply(df$listed_in, function(x){
-  for (name in names(equal_names)){
-    for (elem in equal_names[[name]]){
-      x[match(elem, x)] = name
-    }
-  }
-  return(x)
-})
-sort(get_film_genres_count(df))
-unnecesary_genres = c(
-  "TV Shows", "Movies", "International TV Shows", "International Movies"
-)
-df$listed_in = lapply(df$listed_in, function(x){
-  for (genre in unnecesary_genres){
-    x = x[x!=genre]
-  }
-  return(x)
-})
-sort(get_film_genres_count(df))
-film_genres_count = get_film_genres_count(df)
+film_genres_count = calculate_film_genres_count(data)
 film_genres = names(sort(film_genres_count, decreasing = T))
-hist(film_genres_count)
 #--------------------------------------------------
-
+getChartColor = function(){
+  return('#3182bd')
+}
 #------------BELOW I INCLUDED AGE CATEGORIES----------------
-little_kids = c("G", "TV-Y", "TV-G")
-older_kids = c("PG", "TV-Y7", "TV-Y7-FV", "TV-PG") #7+
-teens = c("PG-13", "TV-14")  #13+
-mature = c("R", "NC-17", "TV-MA") #18+
+getAvailableAges = function(){
+  return(c("little_kids", "older_kids", "teens", "mature"))
+}
+convertRatingToAgeCategory = function(data){
+  age_categories = list(
+    little_kids = c("G", "TV-Y", "TV-G"),
+    older_kids = c("PG", "TV-Y7", "TV-Y7-FV", "TV-PG"), #7+
+    teens = c("PG-13", "TV-14"),  #13+
+    mature = c("R", "NC-17", "TV-MA", "NR", "UR", "") #18+ #NR and UR are "not rated"
+  )
+  ratings = data$rating
+  ratings = sapply(ratings, function(x){
+    for (name in names(age_categories)){
+      if (x %in% age_categories[[name]]){
+        return(name)
+      }
+    }
+    return(x)
+  })
+  data$rating = ratings
+  return(data)
+}
+df = convertRatingToAgeCategory(data)
 #-------------------------------------------
-
+convertDurationsToNumeric = function(df){
+  durations = df$duration
+  durations = unlist(lapply(durations, function(x)as.numeric(unlist(strsplit(x, " "))[1])))
+  df$duration = durations
+  return(df)
+}
+df = convertDurationsToNumeric(data)
+#TO DO scatter plot: release year vs duration
 
 ui = dashboardPage(
     dashboardHeader(title = tags$a(href = "NetflixDashboard", tags$img(src = "logo.jpg", height = '43', width = '50'))),
@@ -108,7 +140,8 @@ ui = dashboardPage(
         menuItem("map", tabName = "map", icon = icon("map")),
         menuItem("table", tabName = "table", icon = icon("table")),
         menuItem("Directors", tabName = "Directors", icon = icon("male")),
-        menuItem("Film genres", tabName = "film_genres", icon = icon("video"))
+        menuItem("Film genres", tabName = "film_genres", icon = icon("video")),
+        menuItem("Durations in years", tabName = "scatter_plots", icon = icon("chart-line"))
     )
     ),
     dashboardBody(
@@ -163,7 +196,20 @@ ui = dashboardPage(
                         plotlyOutput("genre_bar")
                       )
                     )
-                    
+                    ),
+            tabItem(tabName = "scatter_plots", 
+                    sidebarLayout(
+                      sidebarPanel(
+                        selectInput(
+                          "select_type","Select type:", choices = c("TV Show", "Movie"), selected = "Movies"
+                          ),
+                        checkboxGroupInput("choices_of_ages", "Chose ages:", choices = getAvailableAges(), selected = getAvailableAges())
+                      ),
+                      mainPanel(
+                        fluidRow(h2("Durations of films/shows in different years.", align = "center")),
+                        plotlyOutput("scatter_plot")
+                      )
+                      )
                     )
 )))
 server = function(input, output){
@@ -325,6 +371,26 @@ server = function(input, output){
         }
       }
     )
+    
+    output$scatter_plot = renderPlotly({
+      df = convertDurationsToNumeric(data)
+      type = input$select_type
+      df = df[df$type == type,]
+      chosen_ages = input$choices_of_ages
+      df = convertRatingToAgeCategory(df)
+      df = df[df$rating == chosen_ages,]
+      if(type == "TV Show"){
+        ylabel = paste("duration", "(seasons)")
+      }
+      else if (type == "Movie"){
+        ylabel = paste("duration", "(minutes)")
+      }
+      ggplot(df, mapping = aes(release_year, duration)) + 
+        geom_point(alpha = 3/10, color = getChartColor()) + 
+        ylab(ylabel) + 
+        geom_smooth( se = T, color = getChartColor() ,method = "loess", alpha = 0.3, size = 0.3) +
+        theme_bw()
+    })
     
 
 }
