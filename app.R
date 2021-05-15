@@ -98,14 +98,9 @@ calculate_film_genres_count = function(data){
 film_genres_count = calculate_film_genres_count(data)
 film_genres = names(sort(film_genres_count, decreasing = T))
 #--------------------------------------------------
-<<<<<<< HEAD
 getChartColor = function(){
   return('#3182bd')
 }
-=======
-
-
->>>>>>> da8a5ef079e38345751e63157fb8d39cfd7f8f41
 #------------BELOW I INCLUDED AGE CATEGORIES----------------
 getAvailableAges = function(){
   return(c("little_kids", "older_kids", "teens", "mature"))
@@ -172,14 +167,9 @@ ui = dashboardPage(
         menuItem("Table", tabName = "table", icon = icon("table")),
         menuItem("Directors", tabName = "Directors", icon = icon("male")),
         menuItem("Film genres", tabName = "film_genres", icon = icon("video")),
-<<<<<<< HEAD
+        menuItem("Map", tabName = "Map", icon = icon("map")),
         menuItem("Durations in years", tabName = "scatter_plots", icon = icon("chart-line"))
-    )
-    ),
-=======
-        menuItem("Map", tabName = "Map", icon = icon("map"))
     )),
->>>>>>> da8a5ef079e38345751e63157fb8d39cfd7f8f41
     dashboardBody(
         tabItems(
             tabItem("release_years",
@@ -233,7 +223,6 @@ ui = dashboardPage(
                         plotlyOutput("genre_bar")
                       )
                     )
-<<<<<<< HEAD
                     ),
             tabItem(tabName = "scatter_plots", 
                     sidebarLayout(
@@ -248,14 +237,10 @@ ui = dashboardPage(
                         plotlyOutput("scatter_plot")
                       )
                       )
-                    )
-=======
-                    
                     ),
             
             tabItem("Map",fluidPage(plotlyOutput("map", height = 1000, width = 1500), align = "center")
             )
->>>>>>> da8a5ef079e38345751e63157fb8d39cfd7f8f41
 )))
 
 
@@ -415,7 +400,14 @@ server = function(input, output){
       }
     )
     
-<<<<<<< HEAD
+    # Map
+    output$map = renderPlotly({
+      plot_geo(countries_codes) %>% add_trace(
+        z = ~Productions, color = ~Productions, colors = 'Blues', zmin = 0, zmax = 250,
+        text = ~country, locations = ~CODE, marker = list(line = list(color = toRGB("grey"), width = 0.5)), showscale = FALSE) %>%
+        layout(title = "<br></br>Number of productions")
+    })
+    
     output$scatter_plot = renderPlotly({
       df = convertDurationsToNumeric(data)
       type = input$select_type
@@ -434,19 +426,9 @@ server = function(input, output){
         ylab(ylabel) + 
         geom_smooth( se = T, color = getChartColor() ,method = "loess", alpha = 0.3, size = 0.3) +
         theme_bw()
-=======
-    
-    # Map
-    output$map = renderPlotly({
-      plot_geo(countries_codes) %>% add_trace(
-        z = ~Productions, color = ~Productions, colors = 'Blues', zmin = 0, zmax = 250,
-        text = ~country, locations = ~CODE, marker = list(line = list(color = toRGB("grey"), width = 0.5)), showscale = FALSE) %>%
-        layout(title = "<br></br>Number of productions")
->>>>>>> da8a5ef079e38345751e63157fb8d39cfd7f8f41
-    })
+      })
     
 
 }
 
 shinyApp(ui, server)
-
