@@ -8,7 +8,11 @@ library(plotly)
 
 # dataset
 data = read.csv("netflix_titles.csv")
-
+#dat = filter(data, release_year == d$x)
+#d = select(dat, 2, 1)
+#d[2] = 1
+#d = aggregate(. ~ type, data=d, FUN=sum)
+#View(d)
 
 #--------FOR RELEASE YEARS TAB-----------
 a = table(data$type)
@@ -96,6 +100,7 @@ calculate_film_genres_count = function(data){
 }
 film_genres_count = calculate_film_genres_count(data)
 film_genres = names(sort(film_genres_count, decreasing = T))
+
 #--------------------------------------------------
 getChartColor = function(){
   return('#3182bd')
@@ -185,7 +190,9 @@ ui = dashboardPage(
                             ),
                     mainPanel(textOutput("Release_dates"))
                         )
-                )
+                ),
+                fluidRow(column(7, dataTableOutput("click_table")),
+                         column(5, plotOutput("click_plot")))
             ), 
             
             tabItem("table", fluidPage(dataTableOutput("mytable"))
@@ -227,13 +234,13 @@ ui = dashboardPage(
             
             tabItem(tabName = "scatter_plots", 
                     sidebarLayout(
-                      sidebarPanel(
+                      sidebarPanel(width = 2,
                         selectInput(
                           "select_type","Select type:", choices = c("TV Show", "Movie"), selected = "Movies"
                           ),
                         checkboxGroupInput("choices_of_ages", "Chose ages:", choices = getAvailableAges(), selected = getAvailableAges())
                       ),
-                      mainPanel(
+                      mainPanel(width = 9, 
                         fluidRow(h2("Durations of films/shows in different years.", align = "center")),
                         plotlyOutput("scatter_plot")
                       )
@@ -272,6 +279,46 @@ server = function(input, output){
             color = "black"
         )
     })
+    output$click_table = renderDataTable({
+      d <- event_data("plotly_click")
+      if (!is.null(d)){
+        datatable(
+          filter(data[,c(-1)],release_year == d$x) , filter = 'top',
+          options = list(
+            pageLength = 3,
+            lengthMenu = c(5,10,15,20,25,100),
+            scrollX = T,
+            columnDefs = list(list(
+              targets = "_all",
+              render = JS(
+                "function(data, type, row, meta) {",
+                "return type === 'display' && data.length > 30 ?",
+                "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
+                "}")
+            )))
+        )
+      }
+    })
+    output$click_plot = renderPlot({
+      d <- event_data("plotly_click")
+      if (!is.null(d)){
+        dat = filter(data, release_year == d$x)
+        d = select(dat, 2, 1)
+        d[2] = 1
+        d = aggregate(. ~ type, data=d, FUN=sum)
+        d = d %>% 
+          arrange(desc(show_id)) %>%
+          mutate(prop = show_id / sum(d$show_id) *100) %>%
+          mutate(ypos = cumsum(prop)- 0.5*prop )
+        ggplot(d, aes(x="", y=prop, fill=type)) +
+          geom_bar(stat="identity", width=1, color="white") +
+          coord_polar("y", start=0) +
+          theme_void() + 
+
+          scale_fill_brewer(palette="Set1")
+
+      }
+    })
     
     
     # Table tab
@@ -279,7 +326,7 @@ server = function(input, output){
         datatable(
           data[,c(-1)], filter = 'top',
           options = list(
-            pageLength = 5,
+            pageLength = 10,
             lengthMenu = c(5,10,15,20,25,100),
             scrollX = T,
             columnDefs = list(list(
@@ -385,6 +432,8 @@ server = function(input, output){
         }
     }, deleteFile = FALSE)
     
+    
+    #Film genres
     output$genre_bar = renderPlotly({
         film_genre =input$film_genres
         count = sort(film_genres_count, decreasing = T)
@@ -407,7 +456,7 @@ server = function(input, output){
         layout(title = "<br></br>Number of productions")
     })
     
-    # 
+    # Durations in years
     output$scatter_plot = renderPlotly({
       df = convertDurationsToNumeric(data)
       type = input$select_type
@@ -428,7 +477,7 @@ server = function(input, output){
         theme_bw()
       })
     
-    #
+    # About
     output$text = renderUI({
       str1 = paste(h2("About"))
       str2 = paste("NetflixDashboard is a tool for analyzing productions available on Netflix.")
