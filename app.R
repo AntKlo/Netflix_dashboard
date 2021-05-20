@@ -57,8 +57,7 @@ calculate_film_genres_count = function(data){
   }
   film_genres_count = get_film_genres_count(df)
   sort(film_genres_count)
-  #film_genres_count = na.omit(film_genres_count[film_genres_count >= 100])
-  
+
   equal_names = list( 
     Dramas = c("Dramas", "TV Dramas"),
     Comedies = c("Comedies", "TV Comedies", "Stand-Up Comedy & Talk Shows", "Stand-Up Comedy"),
@@ -165,10 +164,11 @@ ui = dashboardPage(
     dashboardSidebar(sidebarMenu(
         menuItem("Release years", tabName = "release_years", icon = icon("calendar-alt")),
         menuItem("Table", tabName = "table", icon = icon("table")),
-        menuItem("Directors", tabName = "Directors", icon = icon("male")),
+        menuItem("Directors&Actors", tabName = "Directors", icon = icon("male")),
         menuItem("Film genres", tabName = "film_genres", icon = icon("video")),
         menuItem("Map", tabName = "Map", icon = icon("map")),
-        menuItem("Durations in years", tabName = "scatter_plots", icon = icon("chart-line"))
+        menuItem("Durations in years", tabName = "scatter_plots", icon = icon("chart-line")),
+        menuItem("About", tabName = "About", icon = icon("info"))
     )),
     dashboardBody(
         tabItems(
@@ -224,6 +224,7 @@ ui = dashboardPage(
                       )
                     )
                     ),
+            
             tabItem(tabName = "scatter_plots", 
                     sidebarLayout(
                       sidebarPanel(
@@ -240,7 +241,9 @@ ui = dashboardPage(
                     ),
             
             tabItem("Map",fluidPage(plotlyOutput("map", height = 1000, width = 1500), align = "center")
-            )
+            ),
+            
+            tabItem("About", fluidPage(htmlOutput("text")))
 )))
 
 
@@ -279,23 +282,19 @@ server = function(input, output){
             pageLength = 5,
             lengthMenu = c(5,10,15,20,25,100),
             scrollX = T,
-            #autoWidth = T,
-            #scrollY = T,
-            #fixedColumns = T,
             columnDefs = list(list(
-            #width = '50px',
-            targets = "_all",# can be c(4, -1,-2)
+            targets = "_all",
             render = JS(
               "function(data, type, row, meta) {",
               "return type === 'display' && data.length > 30 ?",
               "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
-              "}")#sets max of 30 characters to be displayed in a datatable columns specified by targets
+              "}")
           )))
         )
     })
 
     
-    # Directors tab
+    # Directors&Actors tab
     # Men
     output$dir = renderText({
         text_inp = input$prod_type
@@ -408,6 +407,7 @@ server = function(input, output){
         layout(title = "<br></br>Number of productions")
     })
     
+    # 
     output$scatter_plot = renderPlotly({
       df = convertDurationsToNumeric(data)
       type = input$select_type
@@ -427,6 +427,23 @@ server = function(input, output){
         geom_smooth( se = T, color = getChartColor() ,method = "loess", alpha = 0.3, size = 0.3) +
         theme_bw()
       })
+    
+    #
+    output$text = renderUI({
+      str1 = paste(h2("About"))
+      str2 = paste("NetflixDashboard is a tool for analyzing productions available on Netflix.")
+      str3 = paste("-> Release years tab presents productions with regards to release date.")
+      str4 = paste("-> Table tab contains a table with whole dataset.")
+      str5 = paste("-> In Directors&Actors tab you can see the most popular directors and actors.")
+      str6 = paste("-> Film genres tab allows to see how many movies and TV-shows are from each genre.")
+      str7 = paste("-> Map tab shows the world map with number of productions from each coutry")
+      str8 = paste("-> In Durations in years tab user can choose his age range and see how many movies/TV-shows from each year are available and what is their length.")
+      str9 = paste("")
+      str10 = paste("Source files and code available on github: ", tags$a(href="https://github.com/AntKlo/Netflix_dashboard", icon("github", "fa-2x")))
+      str11 = paste("")
+      str12 = paste("Dataset taken from kaggle: ", tags$a(href="https://www.kaggle.com/shivamb/netflix-shows", icon("kaggle", "fa-2x")))
+      HTML(paste(str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, sep = '<br/>'))
+    })
     
 
 }
