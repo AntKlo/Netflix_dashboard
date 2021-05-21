@@ -192,7 +192,7 @@ ui = dashboardPage(
                         )
                 ),
                 fluidRow(column(7, dataTableOutput("click_table")),
-                         column(5, plotOutput("click_plot")))
+                         column(5, fluidRow(), plotOutput("click_plot")))
             ), 
             
             tabItem("table", fluidPage(dataTableOutput("mytable"))
@@ -240,7 +240,9 @@ ui = dashboardPage(
                           ),
                         checkboxGroupInput("choices_of_ages", "Chose ages:", choices = getAvailableAges(), selected = getAvailableAges())
                       ),
-                      mainPanel(width = 9, 
+                      mainPanel(width = 9, tags$style(type="text/css",
+                                                      ".shiny-output-error { visibility: hidden; }",
+                                                      ".shiny-output-error:before { visibility: hidden; }"),
                         fluidRow(h2("Durations of films/shows in different years.", align = "center")),
                         plotlyOutput("scatter_plot")
                       )
@@ -303,22 +305,25 @@ server = function(input, output){
       d <- event_data("plotly_click")
       if (!is.null(d)){
         dat = filter(data, release_year == d$x)
-        d = select(dat, 2, 1)
-        d[2] = 1
-        d = aggregate(. ~ type, data=d, FUN=sum)
-        d = d %>% 
+        da = select(dat, 2, 1)
+        da[2] = 1
+        da = aggregate(. ~ type, data=da, FUN=sum)
+        da = da %>% 
           arrange(desc(show_id)) %>%
-          mutate(prop = show_id / sum(d$show_id) *100) %>%
+          mutate(prop = round(show_id / sum(da$show_id) *100)) %>%
           mutate(ypos = cumsum(prop)- 0.5*prop )
-        ggplot(d, aes(x="", y=prop, fill=type)) +
+        ggplot(da, aes(x="", y=prop, fill=type)) +
           geom_bar(stat="identity", width=1, color="white") +
           coord_polar("y", start=0) +
-          theme_void() + 
+          theme_minimal() + labs(title = d$x, x = "", y = "") + 
+          theme(legend.background = element_rect(fill="#ECF0F5"), plot.title = element_text(hjust = 0.5, size = 17),
+                legend.title = element_text(size = 15), legend.text = element_text(size = 12),
+                plot.background = element_rect(fill = "#ECF0F5", margin(0))) +
 
           scale_fill_brewer(palette="Set1")
 
       }
-    })
+    }, bg="transparent")
     
     
     # Table tab
@@ -472,7 +477,7 @@ server = function(input, output){
       }
       ggplot(df, mapping = aes(release_year, duration)) + 
         geom_point(alpha = 3/10, color = getChartColor()) + 
-        ylab(ylabel) + 
+        ylab(ylabel) + geom_jitter(aes(alpha = 0.3), color = getChartColor()) +
         geom_smooth( se = T, color = getChartColor() ,method = "loess", alpha = 0.3, size = 0.3) +
         theme_bw()
       })
