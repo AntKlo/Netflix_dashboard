@@ -8,11 +8,7 @@ library(plotly)
 
 # dataset
 data = read.csv("netflix_titles.csv")
-#dat = filter(data, release_year == d$x)
-#d = select(dat, 2, 1)
-#d[2] = 1
-#d = aggregate(. ~ type, data=d, FUN=sum)
-#View(d)
+
 
 #--------FOR RELEASE YEARS TAB-----------
 a = table(data$type)
@@ -249,7 +245,8 @@ ui = dashboardPage(
                       )
                     ),
             
-            tabItem("Map",fluidPage(plotlyOutput("map", height = 1000, width = 1500), align = "center")
+            tabItem("Map",fluidRow(plotlyOutput("map", width = "auto", height = 600)),
+                    fluidRow(dataTableOutput("click_table_map"))
             ),
             
             tabItem("About", fluidPage(htmlOutput("text")))
@@ -458,7 +455,27 @@ server = function(input, output){
       plot_geo(countries_codes) %>% add_trace(
         z = ~Productions, color = ~Productions, colors = 'Blues', zmin = 0, zmax = 250,
         text = ~country, locations = ~CODE, marker = list(line = list(color = toRGB("grey"), width = 0.5)), showscale = FALSE) %>%
-        layout(title = "<br></br>Number of productions")
+        layout(title = "Number of productions")
+    })
+    output$click_table_map = renderDataTable({
+      d <- event_data("plotly_click")
+      if (!is.null(d)){
+        datatable(
+          filter(data[,c(-1)], country == countries_codes$country[as.numeric(d[2])+1]) , filter = 'top',
+          options = list(
+            pageLength = 3,
+            lengthMenu = c(5,10,15,20,25,100),
+            scrollX = T,
+            columnDefs = list(list(
+              targets = "_all",
+              render = JS(
+                "function(data, type, row, meta) {",
+                "return type === 'display' && data.length > 30 ?",
+                "'<span title=\"' + data + '\">' + data.substr(0, 30) + '...</span>' : data;",
+                "}")
+            )))
+        )
+      }
     })
     
     # Durations in years
@@ -477,7 +494,7 @@ server = function(input, output){
       }
       ggplot(df, mapping = aes(release_year, duration)) + 
         geom_point(alpha = 3/10, color = getChartColor()) + 
-        ylab(ylabel) + geom_jitter(aes(alpha = 0.3), color = getChartColor()) +
+        ylab(ylabel) + geom_jitter(alpha = 0.3, color = getChartColor()) +
         geom_smooth( se = T, color = getChartColor() ,method = "loess", alpha = 0.3, size = 0.3) +
         theme_bw()
       })
