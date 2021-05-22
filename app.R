@@ -171,15 +171,46 @@ ui = dashboardPage(
         menuItem("Durations in years", tabName = "scatter_plots", icon = icon("chart-line")),
         menuItem("About", tabName = "About", icon = icon("info"))
     )),
-    dashboardBody(
+    dashboardBody(tags$head(
+      # Note the wrapping of the string in HTML()
+      tags$style(HTML("
+      @import url('https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap');
+      .skin-blue .main-header .logo {
+      background-color: #161a1d;
+      }
+
+      .skin-blue .main-header .logo:hover {
+      background-color: #161a1d;
+      }
+      .skin-blue .main-header .navbar {
+      background-color: #161a1d;
+      }
+      .skin-blue .main-sidebar {
+      background-color: #161a1d;
+      }
+      .content-wrapper, .right-side {
+      background-color: #e6e6e9;
+      }
+      .fa {
+      color : #e6e6e9;
+      }
+
+
+      h2 {
+        font-family: 'Yusei Magic', sans-serif;
+      }
+      .shiny-input-container {
+        color: #161a1d;
+      }"))
+    ),
         tabItems(
             tabItem("release_years",
-                fluidRow(h1("Number of productions available on Netflix with regards to world release date"), align = "center"),
+                fluidRow(h2("Number of productions available on Netflix with regards to world release date"), align = "center"),
                 fluidRow(column(width = 4, infoBoxOutput("Movies", width = 12)), column(width = 4, infoBoxOutput("Shows", width = 12)),
                          column(width = 4, infoBoxOutput("Sum", width = 12))),
                 fluidRow(plotlyOutput("rel_years", height = 400, width = "auto")),
                 fluidRow(sidebarLayout(
-                            sidebarPanel(sliderInput("Years", 
+                            sidebarPanel(tags$style(".well {background-color: #e6e6e9;}"), sliderInput("Years", 
                                          label = "Release year",
                                          min = min(c(data$release_year)), max = max(c(data$release_year)),
                                          value = c(1925, 2021)), width = 12
@@ -208,22 +239,21 @@ ui = dashboardPage(
                             tabPanel("Most popular actress", h3(textOutput("act_w")), imageOutput("act_img_w"))
                         )
                     )
-                  ),
-              
+                  )
                   )),
             
             tabItem(tabName = "film_genres",
                     sidebarLayout(
-                      sidebarPanel(
+                      sidebarPanel(width = 2,
                         checkboxGroupInput("film_genres", 
                                            "Film genres", 
                                            film_genres,
                                            selected = film_genres
                         )
                       ),
-                      mainPanel(
+                      mainPanel(width = 9,
                         fluidRow(h2("Number of films from different genres"), align = 'center'),
-                        plotlyOutput("genre_bar")
+                        plotlyOutput("genre_bar", width = "auto", height = 600)
                       )
                     )
                     ),
@@ -240,7 +270,7 @@ ui = dashboardPage(
                                                       ".shiny-output-error { visibility: hidden; }",
                                                       ".shiny-output-error:before { visibility: hidden; }"),
                         fluidRow(h2("Durations of films/shows in different years.", align = "center")),
-                        plotlyOutput("scatter_plot")
+                        plotlyOutput("scatter_plot", width = "auto", height = 600)
                       )
                       )
                     ),
@@ -313,9 +343,9 @@ server = function(input, output){
           geom_bar(stat="identity", width=1, color="white") +
           coord_polar("y", start=0) +
           theme_minimal() + labs(title = d$x, x = "", y = "") + 
-          theme(legend.background = element_rect(fill="#ECF0F5"), plot.title = element_text(hjust = 0.5, size = 17),
+          theme(legend.background = element_rect(fill="#e6e6e9"), plot.title = element_text(hjust = 0.5, size = 17),
                 legend.title = element_text(size = 15), legend.text = element_text(size = 12),
-                plot.background = element_rect(fill = "#ECF0F5", margin(0))) +
+                plot.background = element_rect(fill = "#e6e6e9", margin(0))) +
 
           scale_fill_brewer(palette="Set1")
 
