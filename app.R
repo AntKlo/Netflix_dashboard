@@ -174,7 +174,6 @@ ui = dashboardPage(
     dashboardBody(tags$head(
       # Note the wrapping of the string in HTML()
       tags$style(HTML("
-      @import url('https://fonts.googleapis.com/css2?family=Yusei+Magic&display=swap');
       .skin-blue .main-header .logo {
       background-color: #161a1d;
       }
@@ -194,14 +193,9 @@ ui = dashboardPage(
       .fa {
       color : #e6e6e9;
       }
-
-
-      h2 {
-        font-family: 'Yusei Magic', sans-serif;
-      }
-      .shiny-input-container {
-        color: #161a1d;
-      }"))
+      * { font-family: 'Arial', sans-serif; }"
+        )
+      )
     ),
         tabItems(
             tabItem("release_years",
@@ -533,17 +527,23 @@ server = function(input, output){
     output$text = renderUI({
       str1 = paste(h2("About"))
       str2 = paste("NetflixDashboard is a tool for analyzing productions available on Netflix.")
-      str3 = paste("-> Release years tab presents productions with regards to release date.")
-      str4 = paste("-> Table tab contains a table with whole dataset.")
-      str5 = paste("-> In Directors&Actors tab you can see the most popular directors and actors.")
-      str6 = paste("-> Film genres tab allows to see how many movies and TV-shows are from each genre.")
-      str7 = paste("-> Map tab shows the world map with number of productions from each coutry")
-      str8 = paste("-> In Durations in years tab user can choose his age range and see how many movies/TV-shows from each year are available and what is their length.")
+      str3 = paste("-> Release years tab presents productions with regards to release date. You can use slider to change range;
+                   after clicking on a column table and pie plot appears below with data for choosen year.")
+      str4 = paste("-> Table tab contains a table with whole dataset. Searching and sorting are available.")
+      str5 = paste("-> In Directors&Actors tab you can see the most popular directors and actors. You can choose movie or TV show
+                   and switch between differnet people.")
+      str6 = paste("-> Film genres tab allows to see how many movies and TV-shows are from each genre. You can choose genres that
+                   you are interested in.")
+      str7 = paste("-> Map tab shows the world map with number of productions from each coutry. After clicking on a country
+                   table appears below with productions from that country.")
+      str8 = paste("-> In Durations in years tab user can choose his age range and see how many movies/TV-shows from each year
+                   are available and what is their lengths. You can swap between movie and TV show. Ranges are as follows:")
+      str8.1 = paste("little_kids > for everyone, older kids > 7+ years, tens > 13+ years, mature > 18+ years")
       str9 = paste("")
       str10 = paste("Source files and code available on github: ", tags$a(href="https://github.com/AntKlo/Netflix_dashboard", icon("github", "fa-2x")))
       str11 = paste("")
       str12 = paste("Dataset taken from kaggle: ", tags$a(href="https://www.kaggle.com/shivamb/netflix-shows", icon("kaggle", "fa-2x")))
-      HTML(paste(str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12, sep = '<br/>'))
+      HTML(paste(str1, str2, str3, str4, str5, str6, str7, str8, str8.1, str9, str10, str11, str12, sep = '<br/>'))
     })
     
 
